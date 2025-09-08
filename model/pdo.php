@@ -1,14 +1,14 @@
 <?php
 // Kết nối đến CSDL sử dụng PDO
+
 function pdo_connect(){
-    $servername="localhost:3307";
-    $database="techzone";
+    $servername="localhost:3308";
+    $database="techzone demo";
     $username="root";
     $password="";
     try{
         $conn = new PDO("mysql:host=$servername;dbname=$database;charset=utf8", $username, $password);
         $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        echo("Kết nối thành công");
         return $conn;
     }
     catch(PDOException $e) {
@@ -96,4 +96,41 @@ function pdo_getValue($sql){
     finally{
         unset($conn);
     }
+}
+function get_danhmuc() {
+    $conn = pdo_connect();
+    $sql = "SELECT * FROM danhmuc";
+    $stmt = $conn->query($sql);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+function get_thuongHieu() {
+    $conn = pdo_connect();
+    $sql = "SELECT * FROM thuonghieu ORDER BY ten_thuongHieu";
+    $stmt = $conn->query($sql);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+function updateStatus($ma_donHang, $currentStatus) {
+    // Chuyển trạng thái dựa trên trạng thái hiện tại
+    $nextStatus = null;
+    switch ($currentStatus) {
+        case 'gio-hang':
+            $nextStatus = 'cho-van-chuyen';
+            break;
+        case 'cho-van-chuyen':
+            $nextStatus = 'dang-van-chuyen';
+            break;
+        case 'dang-van-chuyen':
+            $nextStatus = 'da-van-chuyen';
+            break;
+        case 'da-van-chuyen':
+            // Trạng thái cuối cùng, không thể cập nhật
+            return false;
+    }
+
+    if ($nextStatus) {
+        $sql = "UPDATE donhang SET trangThai = ? WHERE ma_donHang = ?";
+        return pdo_execute($sql, $nextStatus, $ma_donHang);
+    }
+
+    return false;
 }
